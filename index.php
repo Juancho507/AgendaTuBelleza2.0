@@ -8,8 +8,6 @@ require("logica/Producto.php");
 require("logica/PQRS.php");
 require("logica/Cita.php");
 require("logica/Estadistica.php");
-require("logica/Agenda.php");
-require("logica/EstadoCita.php");
 ?>
 
 <!DOCTYPE html>
@@ -34,7 +32,6 @@ require("logica/EstadoCita.php");
 $paginas_sin_autenticacion = array(
     "presentacion/autenticarse.php",
     "presentacion/cliente/registroCliente.php",
-    "presentacion/empleado/registroEmpleado.php"
 );
 
 
@@ -52,14 +49,7 @@ $paginas_con_autenticacion = array(
     "presentacion/gerente/eliminarServicio.php",
     "presentacion/gerente/consultarServicios.php",
     "presentacion/gerente/estadisticasServicios.php",
-    "presentacion/gerente/historialServiciospdf.php",
-    "presentacion/empleado/editarPerfil.php",
-    "presentacion/empleado/asignarCita.php",
-    "presentacion/empleado/consultarPQRS.php",
-    "presentacion/empleado/consultarAgenda.php",
-    "presentacion/empleado/pdfpqrs.php",
-    "presentacion/gerente/aceptarEmpleado.php"
-    
+    "presentacion/gerente/historialServiciospdf.php"
 );
 
 

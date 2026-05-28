@@ -1,4 +1,5 @@
 <?php
+// ARCHIVO: presentacion/cliente/eliminarCliente.php (SOLO ESTE CONTENIDO)
 
 if (!isset($_SESSION)) {
     session_start();
