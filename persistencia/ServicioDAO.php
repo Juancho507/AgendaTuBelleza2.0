@@ -75,5 +75,19 @@ class ServicioDAO {
             LEFT JOIN producto p ON s.Producto_idProducto = p.idProducto
             WHERE s.idServicio = " . $idServicio;
     }
+    public function consultarActivos() {
+        return "SELECT idServicio, Nombre FROM servicio WHERE Estado = 1 ORDER BY Nombre ASC";
+    }
+    public function consultarServiciosPorEmpleado($idEmpleado) {
+        return "
+            SELECT
+                s.idServicio AS id,
+                s.Nombre AS nombre
+            FROM servicio s
+            JOIN servicio_has_empleado se ON s.idServicio = se.Servicio_idServicio
+            WHERE se.Empleado_idEmpleado = " . $idEmpleado . "
+            ORDER BY s.Nombre ASC
+        ";
+    }
 }
 ?>

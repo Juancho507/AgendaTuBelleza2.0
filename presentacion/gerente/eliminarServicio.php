@@ -4,18 +4,15 @@ if (!isset($_SESSION) || $_SESSION["rol"] != "gerente") {
     exit();
 }
 
-
 $mensaje = "";
 $idServicioAfectado = isset($_POST["idServicioAfectado"]) && is_numeric($_POST["idServicioAfectado"]) ? $_POST["idServicioAfectado"] : 0;
 $accion = isset($_POST["accion"]) ? $_POST["accion"] : "";
-
 
 if ($idServicioAfectado > 0) {
     
     $servicio = new Servicio($idServicioAfectado);
     
     if ($accion === "confirmar_inactivar") {
-        
         
         if ($servicio->verificarDependencias()) {
             
@@ -173,41 +170,52 @@ include("presentacion/menuGerente.php");
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modalCambiarEstado = document.getElementById('modalCambiarEstado');
+document.addEventListener('DOMContentLoaded', function() {
+    const modalCambiarEstado = document.getElementById('modalCambiarEstado');
+    
+    modalCambiarEstado.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; 
+        const idServicio = button.getAttribute('data-id');
+        const nombreServicio = button.getAttribute('data-nombre');
+        const accion = button.getAttribute('data-accion'); 
+        const titulo = button.getAttribute('data-titulo');
+        const mensaje = button.getAttribute('data-mensaje');
         
-        modalCambiarEstado.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget; 
-            const idServicio = button.getAttribute('data-id');
-            const nombreServicio = button.getAttribute('data-nombre');
-            const accion = button.getAttribute('data-accion'); // 'activar' o 'inactivar'
-            const titulo = button.getAttribute('data-titulo');
-            const mensaje = button.getAttribute('data-mensaje');
-            
-            const modalHeader = document.getElementById('modalHeader');
-            const btnAceptar = document.getElementById('btnAceptar');
-            
-           
-            document.getElementById('idServicioAfectadoInput').value = idServicio;
-            document.getElementById('accionInput').value = `confirmar_${accion}`; 
-            
-          
-            document.getElementById('modalTitulo').textContent = titulo;
-            document.getElementById('nombreServicioModal').textContent = nombreServicio;
-            document.getElementById('modalMensaje').innerHTML = mensaje;
+        document.getElementById('idServicioAfectadoInput').value = idServicio;
+        document.getElementById('accionInput').value = `confirmar_${accion}`; 
+        
+        document.getElementById('modalTitulo').textContent = titulo;
+        document.getElementById('nombreServicioModal').textContent = nombreServicio;
 
-           
-            if (accion === 'inactivar') {
-                modalHeader.classList.remove('bg-success');
-                modalHeader.classList.add('bg-danger');
-                btnAceptar.classList.remove('btn-success');
-                btnAceptar.classList.add('btn-danger');
-            } else { // 'activar'
-                modalHeader.classList.remove('bg-danger');
-                modalHeader.classList.add('bg-success');
-                btnAceptar.classList.remove('btn-danger');
-                btnAceptar.classList.add('btn-success');
-            }
-        });
+        const modalMensaje = document.getElementById('modalMensaje');
+
+        if (accion === 'inactivar') {
+            modalMensaje.innerHTML = `
+                ${mensaje}
+                <br><br>
+                <strong class="text-danger">
+                    ⚠ ADVERTENCIA: Si continúa, este servicio será marcado como INACTIVO y desaparecerá de todo el sistema.
+                    No podrá ser utilizado para nuevas citas y no aparecerá en listados para los usuarios.
+                </strong>
+            `;
+        } else {
+            modalMensaje.innerHTML = mensaje;
+        }
+
+        const modalHeader = document.getElementById('modalHeader');
+        const btnAceptar = document.getElementById('btnAceptar');
+
+        if (accion === 'inactivar') {
+            modalHeader.classList.remove('bg-success');
+            modalHeader.classList.add('bg-danger');
+            btnAceptar.classList.remove('btn-success');
+            btnAceptar.classList.add('btn-danger');
+        } else {
+            modalHeader.classList.remove('bg-danger');
+            modalHeader.classList.add('bg-success');
+            btnAceptar.classList.remove('btn-danger');
+            btnAceptar.classList.add('btn-success');
+        }
     });
+});
 </script>

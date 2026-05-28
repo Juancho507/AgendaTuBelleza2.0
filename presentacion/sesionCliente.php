@@ -34,23 +34,34 @@ $cliente->consultar();
           <div class="table-responsive-sm my-4">
             <table class="table table-striped table-hover">
               <tbody>
+              
+              <tr>
+                  <th>Id</th>
+                  <td><?php echo htmlspecialchars($cliente->getId()); ?></td>
+                </tr>
+                
+                
                 <tr>
                   <th>Nombre</th>
                   <td><?php echo htmlspecialchars($cliente->getNombre()); ?></td>
                 </tr>
+                
                 <tr>
                   <th>Apellido</th>
                   <td><?php echo htmlspecialchars($cliente->getApellido()); ?></td>
                 </tr>
+                
                 <tr>
                   <th>Correo</th>
                   <td><?php echo htmlspecialchars($cliente->getCorreo()); ?></td>
                 </tr>
+                
                 <tr>
                   <th>Teléfono</th>
                   <td><?php echo htmlspecialchars($cliente->getTelefono()); ?></td>
                 </tr>
-                <tr>
+                
+                <tr>               
                   <th>Estado de Cuenta</th>
                   <td>
                     <?php 

@@ -1,5 +1,4 @@
 <?php
-// ARCHIVO: presentacion/menuGerente.php
 require_once("logica/Gerente.php");
 
 $id = $_SESSION["id"];
@@ -68,9 +67,16 @@ $gerente->consultar();
           
         </ul>
       </li>
+      
+       <li class="nav-item">
+        <a class="nav-link" href="?pid=<?php echo base64_encode("presentacion/gerente/aceptarEmpleado.php"); ?>">
+          <i class="fa-solid fa-users-gear"></i> Getion Empleados
+        </a>
+      </li>
+      
       </ul>
-
-    
+      
+      
     <ul class="navbar-nav mb-2 mb-lg-0">
       <li class="nav-item">
         <span class="navbar-text text-white me-3">

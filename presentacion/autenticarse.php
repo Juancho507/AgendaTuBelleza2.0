@@ -6,6 +6,8 @@ if (isset($_GET["sesion"])) {
 }
 
 $error = false;
+$pendiente = false; 
+
 if (isset($_POST["autenticarse"])) {
     $correo = $_POST["correo"];
     $contraseña = $_POST["contraseña"];
@@ -15,22 +17,33 @@ if (isset($_POST["autenticarse"])) {
         $_SESSION["id"] = $gerente->getId();
         $_SESSION["rol"] = "gerente";
         header("Location: ?pid=" . base64_encode("presentacion/sesionGerente.php"));
-    } else {
-        $empleado = new Empleado("", "", "", $correo, $contraseña);
-        if ($empleado->autenticarse()) {
-            $_SESSION["id"] = $empleado->getId();
-            $_SESSION["rol"] = "empleado";
-            header("Location: ?pid=" . base64_encode("presentacion/sesionEmpleado.php"));
-        } else {
-            $cliente = new Cliente("", "", "", $correo, $contraseña);
-            if ($cliente->autenticarse()) {
-                $_SESSION["id"] = $cliente->getId();
-                $_SESSION["rol"] = "cliente";
-                header("Location: ?pid=" . base64_encode("presentacion/sesionCliente.php"));
-            } else {
-                $error = true;
-            }
-        }
+        exit();
+    }
+    $empleado = new Empleado("", "", "", $correo, $contraseña);
+    $resultado = $empleado->autenticarse();
+    
+    if ($resultado === true) {
+        $_SESSION["id"] = $empleado->getId();
+        $_SESSION["rol"] = "empleado";
+        header("Location: ?pid=" . base64_encode("presentacion/sesionEmpleado.php"));
+        exit();
+    }
+    
+    if ($resultado === "inactivo") {
+        header("Location: ?pid=" . base64_encode("presentacion/autenticarse.php") . "&cuentaInactiva=1");
+        exit();
+    }
+    
+    $cliente = new Cliente("", "", "", $correo, $contraseña);
+    if ($cliente->autenticarse()) {
+        $_SESSION["id"] = $cliente->getId();
+        $_SESSION["rol"] = "cliente";
+        header("Location: ?pid=" . base64_encode("presentacion/sesionCliente.php"));
+        exit();
+    }
+    
+    if (!$pendiente) {
+        $error = true;
     }
 }
 ?>
@@ -42,6 +55,7 @@ if (isset($_POST["autenticarse"])) {
 <title>Agenda tu belleza</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://kit.fontawesome.com/2c36e9b7b1.js" crossorigin="anonymous"></script>
+
 <style>
   body {
     background-color: #ffe6f2; 
@@ -73,6 +87,7 @@ if (isset($_POST["autenticarse"])) {
     color: #fff;
     font-weight: bold;
   }
+
   .btn-orange:hover {
     background-color: #cf6e1b;
   }
@@ -98,7 +113,6 @@ if (isset($_POST["autenticarse"])) {
   <div class="container-fluid d-flex flex-wrap justify-content-center align-items-center min-vh-100 px-3 position-relative" style="z-index: 1;">
     <div class="row w-100 flex-lg-row flex-column justify-content-center align-items-center text-center text-lg-start">
 
-      
       <div class="col-lg-5 col-12 d-flex flex-column justify-content-center align-items-center px-3 mb-4 mb-lg-0">
         <div class="rounded-logo mb-4">
           <img src="img/logo.png" alt="Logo Agenda tu belleza">
@@ -114,11 +128,23 @@ if (isset($_POST["autenticarse"])) {
         </div>
       </div>
 
-     
       <div class="col-lg-5 col-12 d-flex justify-content-center">
         <div class="card shadow p-4 w-100" style="max-width: 500px; z-index: 2;">
           <h4 class="text-center mb-4">Bienvenido a <span style="color:#e67e22;">Agenda tu belleza</span></h4>
-          
+
+         <?php if (isset($_GET["cuentaInactiva"])): ?>
+			<div class="alert alert-warning mt-3 text-center">
+    			⚠ Tu cuenta aún no ha sido aprobada por el gerente.
+			</div>
+		<?php endif; ?>
+
+
+          <?php if ($error): ?>
+              <div class="alert alert-danger text-center">
+                  ❌ Correo o contraseña incorrectos.
+              </div>
+          <?php endif; ?>
+
           <form method="POST" action="?pid=<?php echo base64_encode('presentacion/autenticarse.php'); ?>">
             <input type="hidden" name="autenticarse" value="1">
 
@@ -133,17 +159,20 @@ if (isset($_POST["autenticarse"])) {
             </div>
 
             <button type="submit" class="btn btn-orange w-100">Iniciar Sesión</button>
-
-            <?php if ($error): ?>
-              <div class="alert alert-danger mt-3 text-center" role="alert">Correo o contraseña incorrectos</div>
-            <?php endif; ?>
           </form>
 
           <div class="text-center mt-3">
-            <a href="?pid=<?php echo base64_encode('presentacion/cliente/registroCliente.php'); ?>" class="fw-semibold" style="color: #e67e22; text-decoration: underline;">
+            <a href="?pid=<?php echo base64_encode('presentacion/cliente/registroCliente.php'); ?>" style="color: #e67e22; text-decoration: underline;">
               ¿Eres nuevo? Regístrate aquí
             </a>
           </div>
+
+          <div class="text-center mt-3">
+            <a href="?pid=<?php echo base64_encode('presentacion/empleado/registroEmpleado.php'); ?>" style="color: #e67e22; text-decoration: underline;">
+              ¿Quieres trabajar con nosotros? Regístrate aquí
+            </a>
+          </div>
+
         </div>
       </div>
 

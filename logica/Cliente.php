@@ -150,24 +150,27 @@ class Cliente extends Persona {
         $conexion->cerrar();
     }
     
+    
     public function consultarHistorialCitas() {
         $conexion = new Conexion();
         $conexion->abrir();
         $clienteDAO = new ClienteDAO($this->id);
-        $conexion->ejecutar($clienteDAO->consultarHistorialCitas());
+        $resultado = $conexion->ejecutar($clienteDAO->consultarHistorialCitas());
         
         $historial = [];
-        while ($registro = $conexion->registro()) {
+        while ($registro = $conexion->registro($resultado)) {
             $historial[] = [
-                'idCita' => $registro[0],
-                'Fecha' => $registro[1],
+                'idCita'     => $registro[0],
+                'Fecha'      => $registro[1],
                 'HoraInicio' => $registro[2],
-                'HoraFin' => $registro[3],
-                'Servicio' => $registro[4],
-                'Empleado' => $registro[5],
-                'Estado' => $registro[6] 
+                'HoraFin'    => $registro[3],
+                'Servicio'   => $registro[4],
+                'Empleado'   => $registro[5],
+                'Estado'     => $registro[6],
+                'Comentarios'=> $registro[7]
             ];
         }
+        
         $conexion->cerrar();
         return $historial;
     }

@@ -63,5 +63,16 @@ class PQRSDAO {
         WHERE p.Cliente_idCliente = " . $idCliente . "
         ORDER BY p.idPQRS DESC";
     }
+    public function consultarPQRSPorEmpleado($idEmpleado) {
+        return "SELECT
+                    p.idPQRS, p.Descripcion, p.Fecha, p.Evidencia,
+                    t.Tipo AS TipoPQRSNombre,
+                    CONCAT(c.Nombre, ' ', c.Apellido) AS ClienteNombre
+                FROM pqrs p
+                JOIN tipopqrs t ON p.TipoPQRS_idTipoPQRS = t.idTipoPQRS
+                JOIN cliente c ON p.Cliente_idCliente = c.idCliente
+                WHERE p.Empleado_idEmpleado = " . $idEmpleado . "
+                ORDER BY p.Fecha DESC";
+    }
 }
 ?>

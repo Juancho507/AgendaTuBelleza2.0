@@ -80,23 +80,25 @@ class ClienteDAO {
         return "UPDATE Cliente SET Estado = 1 WHERE idCliente = '{$this->id}'";
     }
     public function consultarHistorialCitas() {
-        return "SELECT
-        c.idCita,
-        ag.Fecha,
-        ag.HoraInicio,
-        ag.HoraFin,
-        s.Nombre AS Servicio,
-        e.Nombre AS Empleado,
-        ec.Tipo AS Estado
-    FROM cita c
-    INNER JOIN agenda ag ON c.Agenda_idAgenda = ag.idAgenda
-    INNER JOIN empleado e ON c.Empleado_idEmpleado = e.idEmpleado
-    INNER JOIN estadocita ec ON c.EstadoCita_idEstadoCita = ec.idEstadoCita
-        -- QUITAMOS el JOIN a 'servicio' si no se usa para nada más,
-        -- pero lo dejaremos ya que se usa para obtener s.Nombre AS Servicio.
-    INNER JOIN servicio s ON c.Servicio_idServicio = s.idServicio
-    WHERE c.Cliente_idCliente = " . $this->id . "
-    ORDER BY c.idCita DESC";
+        return "
+        SELECT
+            ct.idCita,
+            a.Fecha,
+            a.HoraInicio,
+            a.HoraFin,
+            s.Nombre AS NombreServicio,
+            CONCAT(e.Nombre, ' ', e.Apellido) AS NombreEmpleado,
+            ec.Tipo AS EstadoCita,
+            ct.comentarios
+        FROM cita ct
+        JOIN agenda a ON ct.Agenda_idAgenda = a.idAgenda
+        JOIN empleado e ON a.Empleado_idEmpleado = e.idEmpleado
+        JOIN servicio s ON a.Servicio_idServicio = s.idServicio
+        JOIN estadocita ec ON ct.EstadoCita_idEstadoCita = ec.idEstadoCita
+            
+        WHERE ct.Cliente_idCliente = " . $this->id . "
+        ORDER BY ct.idCita DESC
+    ";
     }
     public function verificarCitasActivas() {
         return "SELECT idCita

@@ -216,5 +216,56 @@ class Servicio {
         $conexion->cerrar();
         return $servicioDetalle ?: [];
     }
+    public static function consultarActivos() {
+        $conexion = new Conexion();
+        $conexion->abrir();
+        $servicioDAO = new ServicioDAO();
+        $conexion->ejecutar($servicioDAO->consultarActivos());
+        
+        $servicios = [];
+        $resultado = $conexion->getResultado();
+        
+        while ($registro = $conexion->registro()) {
+            $servicios[] = [
+                'idServicio' => $registro[0],
+                'nombre' => $registro[1]
+            ];
+        }
+        $conexion->cerrar();
+        return $servicios;
+    }
+    public static function consultarServiciosPorEmpleado($idEmpleado) {
+        $conexion = new Conexion();
+        
+        try {
+            $conexion->abrir();
+            
+            $servicioDAO = new ServicioDAO();
+            $sql = $servicioDAO->consultarServiciosPorEmpleado($idEmpleado);
+            $conexion->ejecutar($sql);
+            
+            $servicios = [];
+            $resultado = $conexion->getResultado();
+            if ($resultado instanceof mysqli_result) {
+                while ($fila = $resultado->fetch_assoc()) {
+                    $servicios[] = [
+                        'id' => $fila['id'],
+                        'nombre' => $fila['nombre']
+                    ];
+                }
+            }
+            
+            $conexion->cerrar();
+            return $servicios;
+            
+        } catch (Exception $e) {
+            if ($conexion->isAbierta()) {
+                $conexion->cerrar();
+            }
+            error_log("Error al consultar servicios por empleado: " . $e->getMessage());
+            return [];
+        }
+    }
 }
+
 ?>

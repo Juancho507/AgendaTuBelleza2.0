@@ -1,6 +1,6 @@
 <?php
-require_once("persistencia/PQRSDAO.php");
-require_once("persistencia/Conexion.php");
+require_once(__DIR__ . "/../persistencia/PQRSDAO.php");
+require_once(__DIR__ . "/../persistencia/Conexion.php");
 
 class PQRS {
     private $id;
@@ -20,7 +20,7 @@ class PQRS {
         $cliente = "",
         $gerente = "",
         $empleado = "",
-        $evidencia = "" //
+        $evidencia = "" 
         ) {
             $this->id = $id;
             $this->descripcion = $descripcion;
@@ -79,5 +79,6 @@ class PQRS {
         $conexion->cerrar();
         return $historial;
     }
+    
 }
 ?>
