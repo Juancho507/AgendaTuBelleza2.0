@@ -114,6 +114,32 @@ class Agenda {
         $conexion->ejecutar($agendaDAO->actualizar());
         $conexion->cerrar();
     }
-    
+    public static function obtenerAgendaCompleta() {
+        $conexion = new Conexion();
+        try {
+            $conexion->abrir();
+            
+            $agendaDAO = new AgendaDAO();
+            $conexion->ejecutar($agendaDAO->obtenerAgenda());
+            
+            $agenda = array();
+            $resultado = $conexion->getResultado(); 
+            if ($resultado instanceof mysqli_result) {
+                while (($registro = $resultado->fetch_assoc()) != null) {
+                    $agenda[] = $registro;
+                }
+            } else {
+                while (($registro = $conexion->registro()) != null) {
+                    $agenda[] = $registro;
+                }
+            }
+            
+            $conexion->cerrar();
+            return $agenda;
+        } catch (Exception $e) {
+            $conexion->cerrar();
+            return [];
+        }
+    }
     
 }

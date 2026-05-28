@@ -55,6 +55,9 @@ class Empleado extends Persona {
     public function getHojadevida() {
         return $this->hojadevida;
     }
+    public function getServicios() {
+        return $this->servicios;
+    }
     
     public function registrar() {
         $conexion = new Conexion();
@@ -349,6 +352,115 @@ class Empleado extends Persona {
         
         $conexion->cerrar();
         return $afectadas > 0;
+    }
+    
+    public static function obtenerTodosLosEmpleados() {
+        $conexion = new Conexion();
+        try {
+            $conexion->abrir();
+            
+            $empleadoDAO = new EmpleadoDAO();
+            $conexion->ejecutar($empleadoDAO->obtenerEmpleados());
+            
+            $empleados = array();
+            $resultado = $conexion->getResultado(); 
+            if ($resultado instanceof mysqli_result) {
+                while (($registro = $resultado->fetch_assoc()) != null) {
+                    $empleados[] = $registro;
+                }
+            } else {
+                while (($registro = $conexion->registro()) != null) {
+                    $empleados[] = $registro;
+                }
+            }
+            
+            $conexion->cerrar();
+            return $empleados;
+        } catch (Exception $e) {
+            $conexion->cerrar();
+            return [];
+        }
+    }
+    public static function buscarEmpleados($termino, $filtros) {
+        $conexion = new Conexion();
+        $conexion->abrir();
+        $empleados = [];
+        $empleadoDAO = new EmpleadoDAO();
+        
+        $sql = $empleadoDAO->buscarEmpleadosSQL($termino, $filtros);
+        
+        $conexion->ejecutar($sql);
+        
+        while ($r = $conexion->registro()) {
+            $empleados[] = [
+                "idEmpleado" => $r[0],
+                "Nombre" => $r[1],
+                "Apellido" => $r[2],
+                "Correo" => $r[3],
+                "Telefono" => $r[4],
+                "Estado" => $r[5],
+                "Servicios" => $r[6]
+            ];
+        }
+        
+        $conexion->cerrar();
+        return $empleados;
+    }
+    
+    public function consultarServicios() {
+        $this->servicios = []; 
+        
+        if (!isset($this->idEmpleado) || empty($this->idEmpleado)) {
+            return;
+        }
+        
+        $empleadoDAO = new EmpleadoDAO();
+        $conexion = new Conexion();
+        
+        $sql = $empleadoDAO->consultarServiciosPorEmpleadoSQL($this->idEmpleado);
+        
+        $resultado = $conexion->ejecutar($sql);
+        
+        if ($resultado === false || $resultado === null) {
+            return;
+        }
+        
+        $serviciosArray = [];
+        while ($registro = $resultado->fetch_assoc()) {
+            $serviciosArray[] = $registro['Nombre'];
+        }
+        
+        $this->servicios = $serviciosArray;
+    }
+    
+    public static function generarVistaDetalle(Empleado $empleado) {
+        $estado = $empleado->getEstado() == 1 ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-danger">Inactivo</span>';
+        
+        $servicios = implode(', ', $empleado->getServicios() ?? ['N/A']);
+        $salario = number_format($empleado->getSalario() ?? 0, 0, ',', '.');
+        
+        $html = '<div class="row p-3">';
+        $html .= '<div class="col-md-6">';
+        $html .= '<h4>Datos Personales</h4>';
+        $html .= '<ul class="list-group list-group-flush">';
+        $html .= '<li class="list-group-item"><strong>ID:</strong> ' . $empleado->getId() . '</li>';
+        $html .= '<li class="list-group-item"><strong>Nombre:</strong> ' . $empleado->getNombre() . ' ' . $empleado->getApellido() . '</li>';
+        $html .= '<li class="list-group-item"><strong>Correo:</strong> ' . $empleado->getCorreo() . '</li>';
+        $html .= '<li class="list-group-item"><strong>Teléfono:</strong> ' . $empleado->getTelefono() . '</li>';
+        $html .= '</ul>';
+        $html .= '</div>';
+        
+        $html .= '<div class="col-md-6">';
+        $html .= '<h4>Detalles Laborales</h4>';
+        $html .= '<ul class="list-group list-group-flush">';
+        $html .= '<li class="list-group-item"><strong>Estado:</strong> ' . $estado . '</li>';
+        $html .= '<li class="list-group-item"><strong>Salario:</strong> $' . $salario . '</li>';
+        $html .= '<li class="list-group-item"><strong>Horario:</strong> ' . ($empleado->getHorario() ?? 'N/A') . '</li>';
+        $html .= '</ul>';
+        $html .= '</div>';
+        $html .= '</div>';
+        
+        return $html;
     }
     
 }

@@ -58,7 +58,12 @@ $paginas_con_autenticacion = array(
     "presentacion/empleado/consultarPQRS.php",
     "presentacion/empleado/consultarAgenda.php",
     "presentacion/empleado/pdfpqrs.php",
-    "presentacion/gerente/aceptarEmpleado.php"
+    "presentacion/gerente/aceptarEmpleado.php",
+    "presentacion/gerente/editarGerente.php",
+    "presentacion/gerente/historialGerente.php",
+    "presentacion/gerente/BuscarGerente.php",
+    "presentacion/gerente/reportepdf.php"
+    
     
 );
 

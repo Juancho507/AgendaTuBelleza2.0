@@ -1,10 +1,6 @@
 <?php
-require_once("logica/Empleado.php");
-// Asegúrate de que la sesión esté iniciada y el ID exista
 $id = $_SESSION["id"];
 $empleado = new Empleado($id);
-// Usamos el método correcto para cargar los datos del empleado.
-// Si el método en tu clase Empleado se llama 'consultarDatos', cámbialo aquí.
 $empleado->consultar();
 ?>
 

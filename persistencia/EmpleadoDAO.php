@@ -124,6 +124,83 @@ class EmpleadoDAO {
     public function reactivarEmpleado() {
         return "UPDATE empleado SET Estado = 1 WHERE idEmpleado = " . (int)$this->id;
     }
-    
+  
+    public function obtenerEmpleados() {
+        return "
+        SELECT
+            e.idEmpleado,
+            e.Nombre AS nombre,
+            e.Apellido AS apellido,
+            e.Correo AS correo,
+            e.Telefono AS telefono,
+            CASE e.Estado
+                WHEN 1 THEN 'Activo'
+                WHEN 0 THEN 'Inactivo'
+                ELSE 'Pendiente'
+            END AS estado,
+            e.Salario AS salario,
+            e.Horario AS horario,
+            CONCAT(g.Nombre, ' ', g.Apellido) AS gerente_asignado,
+            e.Foto AS foto,
+            e.HojaDeVida AS hojadevida
+        FROM empleado e
+        LEFT JOIN Gerente g ON e.Gerente_idGerente = g.idGerente
+        ORDER BY e.idEmpleado ASC
+    ";
+    }
+    public function buscarEmpleadosSQL($termino, $filtros) {
+        
+        $sql = "SELECT
+                e.idEmpleado,
+                e.Nombre,
+                e.Apellido,
+                e.Correo,
+                e.Telefono,
+                e.Estado,
+                -- CORRECCIÓN FINAL: Usamos s.Nombre (confirmado por la imagen)
+                GROUP_CONCAT(s.Nombre SEPARATOR ', ') AS Servicios_Asignados
+            FROM
+                empleado e
+            LEFT JOIN
+                servicio_has_empleado she ON e.idEmpleado = she.Empleado_idEmpleado
+            LEFT JOIN
+                servicio s ON she.Servicio_idServicio = s.idServicio
+            WHERE 1=1";
+        
+        if (!empty($termino)) {
+            $sql .= " AND (e.Nombre LIKE '%{$termino}%' OR e.Apellido LIKE '%{$termino}%' OR e.Correo LIKE '%{$termino}%' OR e.Telefono LIKE '%{$termino}%' OR e.idEmpleado = '{$termino}')";
+        }
+        
+        if ($filtros['estado'] !== '') {
+            $sql .= " AND e.Estado = '{$filtros['estado']}'";
+        }
+        if (!empty($filtros['servicio'])) {
+            $sql .= " AND e.idEmpleado IN (
+                    SELECT Empleado_idEmpleado
+                    FROM servicio_has_empleado
+                    WHERE Servicio_idServicio = '{$filtros['servicio']}'
+                )";
+        }
+        
+        $sql .= " GROUP BY
+                e.idEmpleado,
+                e.Nombre,
+                e.Apellido,
+                e.Correo,
+                e.Telefono,
+                e.Estado";
+        
+        $sql .= " ORDER BY e.Nombre ASC LIMIT 50";
+        
+        return $sql;
+    }
+    public function consultarServiciosPorEmpleadoSQL($idEmpleado) {
+        $sql = "SELECT s.Nombre
+            FROM servicio s
+            JOIN servicio_has_empleado she ON s.idServicio = she.Servicio_idServicio
+            WHERE she.Empleado_idEmpleado = '{$idEmpleado}'";
+        
+        return $sql;
+    }
 }
 ?>

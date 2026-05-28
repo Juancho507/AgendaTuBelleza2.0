@@ -266,6 +266,34 @@ class Servicio {
             return [];
         }
     }
+    public static function obtenerTodosLosServicios() {
+        $conexion = new Conexion();
+        try {
+            $conexion->abrir();
+            
+            $servicioDAO = new ServicioDAO();
+            $conexion->ejecutar($servicioDAO->obtenerServicios());
+            
+            $servicios = array();
+            $resultado = $conexion->getResultado(); 
+            if ($resultado instanceof mysqli_result) {
+                while (($registro = $resultado->fetch_assoc()) != null) {
+                    $servicios[] = $registro;
+                }
+            } else {
+                while (($registro = $conexion->registro()) != null) {
+                    $servicios[] = $registro;
+                }
+            }
+            
+            $conexion->cerrar();
+            return $servicios;
+        } catch (Exception $e) {
+            $conexion->cerrar();
+            return [];
+        }
+    }
+    
 }
 
 ?>

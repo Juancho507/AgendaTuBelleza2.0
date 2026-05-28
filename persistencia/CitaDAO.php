@@ -3,44 +3,24 @@ class CitaDAO {
     private $idCita;
     private $estadoCitaId;
     private $agendaId;
-    private $empleadoId;
     private $clienteId;
-    private $servicioId;
     private $comentarios;
     
     public function __construct(
         $idCita = "",
         $estadoCitaId = "",
         $agendaId = "",
-        $empleadoId = "",
         $clienteId = "",
-        $servicioId = "",
         $comentarios = ""
         ) {
             $this->idCita = $idCita;
             $this->estadoCitaId = $estadoCitaId;
             $this->agendaId = $agendaId;
-            $this->empleadoId = $empleadoId;
             $this->clienteId = $clienteId;
-            $this->servicioId = $servicioId;
             $this->comentarios = $comentarios;
     }
     
-    public function registrar() {
-        return "INSERT INTO cita (EstadoCita_idEstadoCita, Agenda_idAgenda, Empleado_idEmpleado, Cliente_idCliente, Servicio_idServicio, comentarios)
-                VALUES (
-                    '" . $this->estadoCitaId . "',
-                    '" . $this->agendaId . "',
-                    '" . $this->empleadoId . "',
-                    '" . $this->clienteId . "',
-                    '" . $this->servicioId . "',
-                    '" . $this->comentarios . "'
-                )";
-    }
-    
-    public function consultar() {
-        return "SELECT * FROM cita WHERE idCita = " . $this->idCita;
-    }
+   
     
     public function consultarTodos() {
         return "SELECT c.idCita, c.comentarios,
@@ -97,7 +77,7 @@ class CitaDAO {
                 CONCAT(cl.Nombre, ' ', cl.Apellido) AS NombreCliente,
                 s.Nombre AS NombreServicio,
                 a.Fecha, a.HoraInicio, a.HoraFin,
-                ct.comentarios -- <-- Campo de comentarios del cliente AÑADIDO
+                ct.comentarios 
             FROM cita ct
             JOIN agenda a ON ct.Agenda_idAgenda = a.idAgenda
             JOIN cliente cl ON ct.Cliente_idCliente = cl.idCliente
@@ -160,6 +140,26 @@ class CitaDAO {
         WHERE a.Empleado_idEmpleado = " . $idEmpleado . "
         AND ct.EstadoCita_idEstadoCita IN (" . $estadosActivos . ") 
         ORDER BY a.Fecha ASC, a.HoraInicio ASC
+    ";
+    }
+    public function obtenerCitas() {
+        return "
+        SELECT
+            ct.idCita,
+            a.Fecha,
+            a.HoraInicio,
+            ec.Tipo AS estado,
+            CONCAT(cli.Nombre, ' ', cli.Apellido) AS cliente,
+            CONCAT(emp.Nombre, ' ', emp.Apellido) AS empleado,
+            s.Nombre AS servicio,
+            ct.comentarios
+        FROM cita ct
+        INNER JOIN agenda a ON ct.Agenda_idAgenda = a.idAgenda
+        INNER JOIN cliente cli ON ct.Cliente_idCliente = cli.idCliente
+        INNER JOIN empleado emp ON a.Empleado_idEmpleado = emp.idEmpleado
+        INNER JOIN servicio s ON a.Servicio_idServicio = s.idServicio
+        INNER JOIN estadocita ec ON ct.EstadoCita_idEstadoCita = ec.idEstadoCita
+        ORDER BY ct.idCita ASC
     ";
     }
 }

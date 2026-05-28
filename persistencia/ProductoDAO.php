@@ -24,5 +24,16 @@ class ProductoDAO {
                 FROM producto 
                 ORDER BY Nombre";
     }
+    public function obtenerProductos() {
+        return "
+        SELECT
+            idProducto,
+            Nombre AS nombre,        
+            Descripcion AS descripcion,  
+            Cantidad AS cantidad     
+        FROM producto
+        ORDER BY idProducto ASC
+    ";
+    }
 }
 ?>

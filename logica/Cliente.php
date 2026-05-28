@@ -1,7 +1,7 @@
 <?php
-require_once("logica/Persona.php");
-require_once("persistencia/ClienteDAO.php");
-require_once("persistencia/Conexion.php");
+require_once(__DIR__ . "/Persona.php");
+require_once(__DIR__ . "/../persistencia/ClienteDAO.php");
+require_once(__DIR__ . "/../persistencia/Conexion.php");
 
 class Cliente extends Persona {
     private $estado;
@@ -185,6 +185,110 @@ class Cliente extends Persona {
         $conexion->cerrar();
         
         return $tieneActivas;
+    }
+    
+    public static function obtenerTodosLosClientes() {
+        $conexion = new Conexion();
+        try {
+            $conexion->abrir();
+            
+            $clienteDAO = new ClienteDAO();
+            $conexion->ejecutar($clienteDAO->obtenerClientesCompleto());
+            
+            $clientes = array();
+            $resultado = $conexion->getResultado(); 
+            if ($resultado instanceof mysqli_result) {
+                while (($registro = $resultado->fetch_assoc()) != null) {
+                    $clientes[] = $registro;
+                }
+            } else {
+                while (($registro = $conexion->registro()) != null) {
+                    $clientes[] = $registro;
+                }
+            }
+            
+            $conexion->cerrar();
+            return $clientes;
+        } catch (Exception $e) {
+            $conexion->cerrar();
+            return [];
+        }
+    }
+    public static function buscarClientes($termino, $filtros) {
+        $conexion = new Conexion();
+        $conexion->abrir();
+        $clientes = [];
+        
+        $clienteDAO = new ClienteDAO();
+        
+        $sql = $clienteDAO->buscarClientesSQL($termino, $filtros);
+        
+        $conexion->ejecutar($sql);
+        
+        while ($r = $conexion->registro()) {
+            $cliente = [
+                "idCliente" => $r[0],
+                "Nombre" => $r[1],
+                "Apellido" => $r[2],
+                "Correo" => $r[3],
+                "Telefono" => $r[4],
+                "Estado" => $r[5],
+                "citas_realizadas" => $r[6]
+            ];
+            if (!empty($filtros['minCitas']) && is_numeric($filtros['minCitas']) && $cliente["citas_realizadas"] < (int)$filtros['minCitas']) {
+                continue;
+            }
+            
+            $clientes[] = $cliente;
+        }
+        
+        $conexion->cerrar();
+        return $clientes;
+    }
+    
+    public static function generarVistaDetalle(Cliente $cliente) {
+        
+        $estado = $cliente->getEstado() == 1 ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-danger">Inactivo</span>';
+        $totalCitas = $cliente->getTotalCitas(); 
+        
+        $html = '<div class="row p-3">';
+        $html .= '<div class="col-12">';
+        $html .= '<h4>Información Personal</h4>';
+        $html .= '<ul class="list-group list-group-flush">';
+        $html .= '<li class="list-group-item"><strong>ID:</strong> ' . $cliente->getId() . '</li>';
+        $html .= '<li class="list-group-item"><strong>Nombre Completo:</strong> ' . $cliente->getNombre() . ' ' . $cliente->getApellido() . '</li>';
+        $html .= '<li class="list-group-item"><strong>Correo:</strong> ' . $cliente->getCorreo() . '</li>';
+        $html .= '<li class="list-group-item"><strong>Teléfono:</strong> ' . $cliente->getTelefono() . '</li>';
+        $html .= '<li class="list-group-item"><strong>Estado:</strong> ' . $estado . '</li>';
+        $html .= '<li class="list-group-item"><strong>Citas Finalizadas:</strong> ' . $totalCitas . '</li>'; 
+        $html .= '</ul>';
+        $html .= '</div>';
+        
+        $html .= '</div>';
+        
+        return $html;
+    }
+    private $totalCitas = 0;
+    
+    public function consultarTotalCitas() {
+        if (!isset($this->idCliente) || empty($this->idCliente)) {
+            return;
+        }
+        
+        $clienteDAO = new ClienteDAO();
+        $conexion = new Conexion();
+        
+        $sql = $clienteDAO->contarCitasRealizadasSQL($this->idCliente);
+        
+        $resultado = $conexion->ejecutar($sql);
+        
+        if ($registro = $resultado->fetch_assoc()) {
+            $this->totalCitas = (int)$registro['totalCitas'];
+        }
+    }
+    
+    public function getTotalCitas() {
+        return $this->totalCitas;
     }
 }
     

@@ -70,7 +70,25 @@ $gerente->consultar();
       
        <li class="nav-item">
         <a class="nav-link" href="?pid=<?php echo base64_encode("presentacion/gerente/aceptarEmpleado.php"); ?>">
-          <i class="fa-solid fa-users-gear"></i> Getion Empleados
+          <i class="fa-solid fa-users-gear"></i> Gestion Empleados
+        </a>
+      </li>
+      
+        <li class="nav-item">
+        <a class="nav-link" href="?pid=<?php echo base64_encode("presentacion/gerente/editarGerente.php"); ?>">
+          <i class="fa-solid fa-id-card"></i> Editar Información
+        </a>
+      </li>
+      
+        <li class="nav-item">
+        <a class="nav-link" href="?pid=<?php echo base64_encode("presentacion/gerente/historialGerente.php"); ?>">
+          <i class="fa-solid fa-file-lines"></i> Consultar Historial 
+        </a>
+      </li>
+      
+        <li class="nav-item">
+        <a class="nav-link" href="?pid=<?php echo base64_encode("presentacion/gerente/BuscarGerente.php"); ?>">
+          <i class="fa-solid fa-magnifying-glass"></i> Buscar Empleado/Cliente
         </a>
       </li>
       

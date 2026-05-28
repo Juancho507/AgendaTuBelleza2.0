@@ -16,7 +16,6 @@ $empleado->consultar();
 $pqrs_list = $empleado->consultarPQRS();
 $nombreEmpleado = htmlspecialchars($empleado->getNombre() . ' ' . $empleado->getApellido());
 
-$promedio = "N/A";
 
 if (isset($pqrs_list['error'])) {
     $errorConsulta = true;
@@ -60,17 +59,7 @@ include("presentacion/menuEmpleado.php");
     <?php else: ?>
         
         <div class="row mb-4">
-            
-            <div class="col-md-4">
-                <div class="card text-center bg-light shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Promedio General </h5>
-                        <h1 class="display-4 text-warning"><?php echo $promedio; ?></h1>
-                        <p class="card-text text-muted">La tabla PQRS no incluye calificación directa.</p>
-                        <p class="card-text text-muted">Basado en <?php echo count($pqrs_list); ?> registros</p>
-                    </div>
-                </div>
-            </div>
+         
             
             <div class="col-md-8">
                 <div class="card shadow h-100">

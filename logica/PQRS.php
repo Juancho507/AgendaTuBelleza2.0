@@ -80,5 +80,33 @@ class PQRS {
         return $historial;
     }
     
+    public static function obtenerTodasLasPQRS() {
+        $conexion = new Conexion();
+        try {
+            $conexion->abrir();
+            
+            $pqrsDAO = new PQRSDAO();
+            $conexion->ejecutar($pqrsDAO->obtenerPQRS());
+            
+            $pqrs = array();
+            $resultado = $conexion->getResultado();
+            if ($resultado instanceof mysqli_result) {
+                while (($registro = $resultado->fetch_assoc()) != null) {
+                    $pqrs[] = $registro;
+                }
+            } else {
+                while (($registro = $conexion->registro()) != null) {
+                    $pqrs[] = $registro;
+                }
+            }
+            
+            $conexion->cerrar();
+            return $pqrs;
+        } catch (Exception $e) {
+            $conexion->cerrar();
+            return [];
+        }
+    }
+    
 }
 ?>

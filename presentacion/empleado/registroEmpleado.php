@@ -110,7 +110,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     if ($errorValidacion == 0 && !$errorEnSubidaFoto && !$errorEnSubidaHoja) {
-        require_once "logica/Empleado.php";
         $gerentePorDefecto = 1;
 
         $empleado = new Empleado(

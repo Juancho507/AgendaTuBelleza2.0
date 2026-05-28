@@ -107,5 +107,75 @@ class ClienteDAO {
                 AND EstadoCita_idEstadoCita IN (1, 2)
                 LIMIT 1";
     }
-}
+    
+    public function obtenerClientesCompleto() {
+        return "
+        SELECT
+            c.idCliente,
+            c.Nombre AS nombre,
+            c.Apellido AS apellido,
+            c.Correo AS correo,
+            c.Telefono AS telefono,
+            CASE c.Estado
+                WHEN 1 THEN 'Activo'
+                ELSE 'Inactivo'
+            END AS estado,
+            c.FechaRegistro AS fecha_registro,
+            CONCAT(g.Nombre, ' ', g.Apellido) AS gerente_asignado,
+            c.Foto AS foto
+        FROM Cliente c
+        LEFT JOIN Gerente g ON c.Gerente_idGerente = g.idGerente
+        ORDER BY c.idCliente ASC;
+    ";
+    }
+    
+    public function buscarClientesSQL($termino, $filtros) {
+        
+        $sql = "SELECT
+                c.idCliente,
+                c.Nombre,
+                c.Apellido,
+                c.Correo,
+                c.Telefono,
+                c.Estado,
+                COUNT(ci.idCita) AS citas_realizadas -- Contamos todas las citas
+            FROM
+                cliente c
+            LEFT JOIN
+                cita ci ON c.idCliente = ci.Cliente_idCliente
+            WHERE 1=1";
+        if (!empty($termino)) {
+            $sql .= " AND (c.Nombre LIKE '%{$termino}%' OR c.Apellido LIKE '%{$termino}%' OR c.Correo LIKE '%{$termino}%' OR c.Telefono LIKE '%{$termino}%' OR c.idCliente = '{$termino}')";
+        }
+        
+        if ($filtros['estado'] !== '') {
+            $sql .= " AND c.Estado = '{$filtros['estado']}'";
+        }
+        
+        if (!empty($filtros['minCitas']) && $filtros['minCitas'] > 0) {
+        }
+        $sql .= " GROUP BY
+                c.idCliente,
+                c.Nombre,
+                c.Apellido,
+                c.Correo,
+                c.Telefono,
+                c.Estado";
+        if (!empty($filtros['minCitas']) && $filtros['minCitas'] > 0) {
+            $sql .= " HAVING COUNT(ci.idCita) >= '{$filtros['minCitas']}'";
+        }
+        
+        $sql .= " ORDER BY c.Nombre ASC LIMIT 50";
+        
+        return $sql;
+    }
+    public function contarCitasRealizadasSQL($idCliente) {
+        $sql = "SELECT COUNT(idCita) as totalCitas
+            FROM cita
+            WHERE Cliente_idCliente = '{$idCliente}'
+            AND Estado = 3"; 
+        return $sql;
+    }
+    }
+
 ?>

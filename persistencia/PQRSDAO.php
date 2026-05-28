@@ -74,5 +74,25 @@ class PQRSDAO {
                 WHERE p.Empleado_idEmpleado = " . $idEmpleado . "
                 ORDER BY p.Fecha DESC";
     }
+ 
+    public function obtenerPQRS() {
+        return "
+        SELECT
+            p.idPQRS,
+            p.Fecha,
+            p.Descripcion,
+            tp.Tipo AS tipo_pqrs,
+            CONCAT(cli.Nombre, ' ', cli.Apellido) AS cliente,
+            COALESCE(CONCAT(emp.Nombre, ' ', emp.Apellido), 'N/A') AS empleado_asociado,
+            CONCAT(g.Nombre, ' ', g.Apellido) AS gerente_registro,
+            p.Evidencia
+        FROM pqrs p
+        INNER JOIN tipopqrs tp ON p.TipoPQRS_idTipoPQRS = tp.idTipoPQRS
+        INNER JOIN cliente cli ON p.Cliente_idCliente = cli.idCliente
+        LEFT JOIN empleado emp ON p.Empleado_idEmpleado = emp.idEmpleado
+        LEFT JOIN gerente g ON p.Gerente_idGerente = g.idGerente
+        ORDER BY p.idPQRS ASC
+    ";
+    }
 }
 ?>

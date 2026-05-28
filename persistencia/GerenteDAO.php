@@ -18,16 +18,26 @@ class GerenteDAO {
     
     public function autenticarse() {
         return "SELECT idGerente
-                FROM Gerente
-                WHERE Correo = '" . $this->correo . "'
-                AND Contraseña = '" . $this->contraseña . "'";
-        
-        
+                FROM gerente
+                WHERE correo = '{$this->correo}'
+                AND contraseña = '{$this->contraseña}'";
     }
+    
     public function consultar() {
         return "SELECT idGerente, nombre, apellido, correo, telefono
-            FROM gerente
-            WHERE idGerente = " . $this->id;
+                FROM gerente
+                WHERE idGerente = {$this->id}";
     }
+    
+    public function actualizar() {
+        return "UPDATE gerente SET
+                nombre = '{$this->nombre}',
+                apellido = '{$this->apellido}',
+                correo = '{$this->correo}',
+                contraseña = '{$this->contraseña}',
+                telefono = '{$this->telefono}'
+                WHERE idGerente = {$this->id}";
+    }
+    
 }
 ?>

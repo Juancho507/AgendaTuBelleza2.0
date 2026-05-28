@@ -1,6 +1,6 @@
 <?php
-require_once("persistencia/ProductoDAO.php");
-require_once("persistencia/Conexion.php");
+require_once(__DIR__ . "/../persistencia/ProductoDAO.php");
+require_once(__DIR__ . "/../persistencia/Conexion.php");
 
 class Producto {
     private $idProducto;
@@ -41,6 +41,33 @@ class Producto {
         
         $conexion->cerrar();
         return $productos;
+    }
+    public static function obtenerTodosLosProductos() {
+        $conexion = new Conexion();
+        try {
+            $conexion->abrir();
+            
+            $productoDAO = new ProductoDAO();
+            $conexion->ejecutar($productoDAO->obtenerProductos());
+            
+            $productos = array();
+            $resultado = $conexion->getResultado(); 
+            if ($resultado instanceof mysqli_result) {
+                while (($registro = $resultado->fetch_assoc()) != null) {
+                    $productos[] = $registro;
+                }
+            } else {
+                while (($registro = $conexion->registro()) != null) {
+                    $productos[] = $registro;
+                }
+            }
+            
+            $conexion->cerrar();
+            return $productos;
+        } catch (Exception $e) {
+            $conexion->cerrar();
+            return [];
+        }
     }
 }
 ?>

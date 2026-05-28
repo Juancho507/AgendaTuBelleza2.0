@@ -73,6 +73,27 @@ class AgendaDAO {
         return "DELETE FROM agenda
                 WHERE idAgenda = " . $this->idAgenda;
     }
-    
+    public function obtenerAgenda() {
+        return "
+        SELECT
+            a.idAgenda,
+            a.Fecha AS fecha,
+            a.HoraInicio AS hora_inicio,
+            a.HoraFin AS hora_fin,
+            CONCAT(e.Nombre, ' ', e.Apellido) AS empleado,
+            s.Nombre AS servicio,
+            CASE
+                WHEN ct.idCita IS NOT NULL THEN ec.Tipo
+                ELSE 'Disponible'
+            END AS estado_agenda,
+            ct.idCita AS cita_id
+        FROM agenda a
+        INNER JOIN empleado e ON a.Empleado_idEmpleado = e.idEmpleado
+        INNER JOIN servicio s ON a.Servicio_idServicio = s.idServicio
+        LEFT JOIN cita ct ON a.idAgenda = ct.Agenda_idAgenda
+        LEFT JOIN estadocita ec ON ct.EstadoCita_idEstadoCita = ec.idEstadoCita
+        ORDER BY a.idAgenda ASC
+    ";
+    }
 }
 ?>

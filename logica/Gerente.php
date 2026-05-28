@@ -37,9 +37,10 @@ class Gerente extends Persona {
         
         if ($conexion->filas() == 1) {
             $datos = $conexion->registro();
-            $this->nombre = $datos[1];
+            $this->id       = $datos[0];
+            $this->nombre   = $datos[1];
             $this->apellido = $datos[2];
-            $this->correo = $datos[3];
+            $this->correo   = $datos[3];
             $this->telefono = $datos[4];
             $conexion->cerrar();
             return true;
@@ -47,6 +48,26 @@ class Gerente extends Persona {
             $conexion->cerrar();
             return false;
         }
+    }
+    
+    public function actualizar() {
+        $conexion = new Conexion();
+        $conexion->abrir();
+        
+        $gerenteDAO = new GerenteDAO(
+            $this->id,
+            $this->nombre,
+            $this->apellido,
+            $this->correo,
+            $this->contraseña,
+            $this->telefono
+            );
+        
+        $conexion->ejecutar($gerenteDAO->actualizar());
+        
+        $resultado = $conexion->filas() > 0;
+        $conexion->cerrar();
+        return $resultado;
     }
 }
 ?>

@@ -89,5 +89,24 @@ class ServicioDAO {
             ORDER BY s.Nombre ASC
         ";
     }
+    
+    public function obtenerServicios() {
+        return "
+        SELECT
+            s.idServicio,
+            s.Nombre AS nombre,
+            s.Descripcion AS descripcion,
+            s.Precio AS precio,
+            CASE s.Estado
+                WHEN 1 THEN 'Activo'
+                ELSE 'Inactivo'
+            END AS estado,
+            p.Nombre AS producto_asociado,
+            s.Producto_idProducto
+        FROM servicio s
+        LEFT JOIN producto p ON s.Producto_idProducto = p.idProducto
+        ORDER BY s.idServicio ASC
+    ";
+    }
 }
 ?>

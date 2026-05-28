@@ -104,7 +104,7 @@ include("presentacion/menuGerente.php");
                     }
                     ?>
 
-                   <form method="post" onsubmit="return confirmarCambios();">
+                    <form method="post">
                         <div class="mb-3">
                             <label class="form-label">Nombre *</label>
                             <input type="text" name="nombre" class="form-control"
@@ -145,11 +145,6 @@ include("presentacion/menuGerente.php");
         </div>
     </div>
 </div>
-<script>
-function confirmarCambios() {
-    return confirm("¿Estás seguro de que deseas guardar los cambios?");
-}
-</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 

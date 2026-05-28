@@ -20,6 +20,8 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && isset($_POST['idEmpleado'])) {
         $accion = $_POST['accion'];
         $idEmpleado = (int) $_POST['idEmpleado'];
+        $empleado = new Empleado($idEmpleado);
+        $ok = false;
         
         if ($accion === 'aceptar') {
             $salario = isset($_POST['salario']) ? trim($_POST['salario']) : '';
@@ -28,7 +30,6 @@ try {
             if ($salario === '' || !is_numeric($salario)) {
                 $mensaje = "<div class='alert alert-warning'>Ingrese un salario numérico válido para poder aceptar el empleado.</div>";
             } else {
-                $empleado = new Empleado($idEmpleado);
                 $ok = $empleado->aprobar($salario, $horario, $idGerente);
                 
                 if ($ok) {
@@ -39,20 +40,21 @@ try {
             }
         }
         
-        if ($accion === 'observar') {
-            $mensaje = "<div class='alert alert-info'>Solicitud no aceptada. Se mantiene inactiva.</div>";
-        }
         if ($accion === 'inactivar') {
-            $empleado = new Empleado($idEmpleado);
-            $ok = $empleado->inactivar();
-            if ($ok) {
-                $mensaje = "<div class='alert alert-warning'>Empleado inactivado correctamente.</div>";
+            if (Cita::consultarActivasHoyPorEmpleado($idEmpleado)) {
+                $mensaje = "<div class='alert alert-danger'>El empleado no puede ser inactivado/eliminado porque tiene citas o servicios activos o pendientes. Primero deben ser cancelados o finalizados.</div>";
             } else {
-                $mensaje = "<div class='alert alert-danger'>No se pudo inactivar el empleado.</div>";
+                $ok = $empleado->inactivar();
+                
+                if ($ok) {
+                    $mensaje = "<div class='alert alert-success'>Empleado inactivado (eliminado de la vista principal) correctamente.</div>";
+                } else {
+                    $mensaje = "<div class='alert alert-danger'>No se pudo inactivar el empleado.</div>";
+                }
             }
         }
+        
         if ($accion === 'reactivar') {
-            $empleado = new Empleado($idEmpleado);
             $ok = $empleado->reactivar();
             if ($ok) {
                 $mensaje = "<div class='alert alert-success'>Empleado reactivado correctamente.</div>";
@@ -60,8 +62,10 @@ try {
                 $mensaje = "<div class='alert alert-danger'>No se pudo reactivar el empleado.</div>";
             }
         }
+        if ($accion === 'observar') {
+            $mensaje = "<div class='alert alert-info'>Solicitud no aceptada. Se mantiene inactiva.</div>";
+        }
     }
-    
     $pendientes = [];
     $sqlPend = "SELECT idEmpleado, Nombre, Apellido, Correo, Estado, Salario, Horario, Gerente_idGerente, Foto, HojaDeVida
                 FROM empleado
@@ -82,6 +86,7 @@ try {
             "HojaDeVida" => $r[9]
         ];
     }
+    
     $activos = [];
     $sqlAct = "SELECT idEmpleado, Nombre, Apellido, Correo, Estado, Salario, Horario, Gerente_idGerente, Foto, HojaDeVida
                FROM empleado
@@ -115,14 +120,14 @@ include("presentacion/menuGerente.php");
 ?>
 
 <div class="container mt-5">
-    <h2 class="text-danger mb-3"><i class="fa-solid fa-user-check"></i> Gestión de Solicitudes de Empleados</h2>
+    <h2 class="text-danger mb-3"><i class="fa-solid fa-user-check"></i> Gestión de Empleados</h2>
 
     <?php echo $mensaje; ?>
+    
     <div class="card mb-4">
         <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-            <span>Solicitudes Pendientes</span>
+            <span>Solicitudes Pendientes de Aprobación</span>
         </div>
-
         <div class="card-body">
             <?php if (empty($pendientes)): ?>
                 <div class="alert alert-info text-center">No hay solicitudes pendientes.</div>
@@ -217,8 +222,8 @@ include("presentacion/menuGerente.php");
                                                 <i class="fa-solid fa-check"></i> Aceptar Registro
                                             </button>
 
-                                            <button type="submit" name="accion" value="inactivar" class="btn btn-warning">
-                                                <i class="fa-solid fa-user-slash"></i> Rechazar / No aceptar
+                                            <button type="submit" name="accion" value="observar" class="btn btn-warning">
+                                                <i class="fa-solid fa-user-slash"></i> Rechazar / Observar
                                             </button>
 
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -227,7 +232,6 @@ include("presentacion/menuGerente.php");
                                     </div>
                                 </div>
                             </div>
-
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -235,6 +239,7 @@ include("presentacion/menuGerente.php");
             <?php endif; ?>
         </div>
     </div>
+    
     <div class="card">
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
             <span>Empleados Activos / Inactivos</span>
@@ -244,8 +249,12 @@ include("presentacion/menuGerente.php");
             <?php if (empty($activos)): ?>
                 <div class="alert alert-info text-center">No hay empleados activos o inactivos.</div>
             <?php else: ?>
+                <div class="mb-3">
+                    <input type="text" id="filtroTabla" class="form-control" placeholder="Buscar por Nombre, Correo, Salario o Horario...">
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover" id="tablaEmpleados">
                         <thead class="table-light">
                             <tr>
                                 <th>ID</th>
@@ -271,16 +280,18 @@ include("presentacion/menuGerente.php");
                                             echo "<span class='badge {$cl}'>".$txt."</span>";
                                         ?>
                                     </td>
-                                    <td><?php echo $a['Salario'] ? number_format($a['Salario'],0,',','.') : '-'; ?></td>
-                                    <td><?php echo htmlspecialchars($a['Horario']); ?></td>
+                                    <td data-filtro="<?php echo $a['Salario'] ?? ''; ?>"><?php echo $a['Salario'] ? number_format($a['Salario'],0,',','.') : '-'; ?></td>
+                                    <td data-filtro="<?php echo htmlspecialchars($a['Horario']); ?>"><?php echo htmlspecialchars($a['Horario']); ?></td>
                                     <td>
                                         <?php if ($a['Estado'] == 1): ?>
-                                            <form method="POST" style="display:inline;">
-                                                <input type="hidden" name="idEmpleado" value="<?php echo $a['idEmpleado']; ?>">
-                                                <button type="submit" name="accion" value="inactivar" class="btn btn-danger btn-sm">
-                                                    <i class="fa-solid fa-user-slash"></i> Inactivar
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-danger btn-sm" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalConfirmarInactivar"
+                                                data-id="<?php echo $a['idEmpleado']; ?>"
+                                                data-nombre="<?php echo htmlspecialchars($a['Nombre'] . " " . $a['Apellido']); ?>"
+                                                data-correo="<?php echo htmlspecialchars($a['Correo']); ?>">
+                                                <i class="fa-solid fa-user-slash"></i> Inactivar
+                                            </button>
                                         <?php else: ?>
                                             <form method="POST" style="display:inline;">
                                                 <input type="hidden" name="idEmpleado" value="<?php echo $a['idEmpleado']; ?>">
@@ -298,6 +309,97 @@ include("presentacion/menuGerente.php");
             <?php endif; ?>
         </div>
     </div>
-
 </div>
+
+<div class="modal fade" id="modalConfirmarInactivar" tabindex="-1" aria-labelledby="modalConfirmarInactivarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalConfirmarInactivarLabel">⚠️ Confirmar Inactivación de Empleado</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" id="formInactivar">
+                <div class="modal-body">
+                    <input type="hidden" name="idEmpleado" id="modalIdEmpleado">
+                    <input type="hidden" name="accion" value="inactivar">
+                    
+                    <p class="lead">¿Está seguro de inactivar al empleado?</p>
+                    
+                    <div class="p-3 mb-3 bg-light rounded">
+                        <strong>Nombre:</strong> <span id="modalNombreEmpleado"></span><br>
+                        <strong>Correo:</strong> <span id="modalCorreoEmpleado"></span>
+                    </div>
+
+                    <div class="alert alert-danger fw-bold">
+                        <i class="fa-solid fa-triangle-exclamation"></i> ADVERTENCIA: Esta acción es irreversible y revocará su acceso al sistema. Si el empleado tiene citas o servicios activos, la operación será BLOQUEADA hasta que se cancelen o finalicen.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" id="btnConfirmarEliminar">
+                        <i class="fa-solid fa-trash-can"></i> Confirmar Inactivar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalConfirmar = document.getElementById('modalConfirmarInactivar');
+        modalConfirmar.addEventListener('show.bs.modal', function (event) {
+            // Botón que disparó el modal
+            const button = event.relatedTarget; 
+            
+            // Obtener datos del botón
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+            const correo = button.getAttribute('data-correo');
+
+            // Actualizar el contenido del modal
+            const modalIdEmpleado = modalConfirmar.querySelector('#modalIdEmpleado');
+            const modalNombreEmpleado = modalConfirmar.querySelector('#modalNombreEmpleado');
+            const modalCorreoEmpleado = modalConfirmar.querySelector('#modalCorreoEmpleado');
+
+            modalIdEmpleado.value = id;
+            modalNombreEmpleado.textContent = nombre;
+            modalCorreoEmpleado.textContent = correo;
+        });
+
+    
+        const filtroInput = document.getElementById('filtroTabla');
+        const tabla = document.getElementById('tablaEmpleados');
+        const filas = tabla ? tabla.getElementsByTagName('tbody')[0].getElementsByTagName('tr') : [];
+
+        if (filtroInput) {
+            filtroInput.addEventListener('keyup', function() {
+                const filtro = filtroInput.value.toLowerCase();
+                
+                for (let i = 0; i < filas.length; i++) {
+                    let contenidoFila = '';
+                    const celdas = filas[i].getElementsByTagName('td');
+                    
+                    // Solo considerar las primeras 6 columnas para búsqueda
+                    for (let j = 1; j < 6; j++) { 
+                        if (celdas[j]) {
+                            // Usar el atributo 'data-filtro' para campos formateados (Salario/Horario) si existe
+                            let textoCelda = celdas[j].getAttribute('data-filtro') || celdas[j].textContent;
+                            contenidoFila += textoCelda.toLowerCase() + ' ';
+                        }
+                    }
+                    
+                    // Mostrar u ocultar la fila
+                    if (contenidoFila.indexOf(filtro) > -1) {
+                        filas[i].style.display = '';
+                    } else {
+                        filas[i].style.display = 'none';
+                    }
+                }
+            });
+        }
+    });
+</script>
