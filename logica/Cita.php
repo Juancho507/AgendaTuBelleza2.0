@@ -8,6 +8,8 @@ class Cita {
     private $agendaId;
     private $clienteId;
     private $comentarios;
+    private $conexion;
+    private $dao;
     
     public function __construct(
         $idCita = "",
@@ -21,6 +23,8 @@ class Cita {
             $this->agendaId = $agendaId;
             $this->clienteId = $clienteId;
             $this->comentarios = $comentarios;
+            $this->conexion = new Conexion();
+            $this->dao = new CitaDAO();
     }
     
     public function getIdCita() { return $this->idCita; }
@@ -250,6 +254,191 @@ class Cita {
             $conexion->cerrar();
             return [];
         }
+    }
+    public static function verificarDisponibilidadPorAgendaId($agendaId) {
+        $conexion = new Conexion();
+        try {
+            $conexion->abrir();
+            $citaDAO = new CitaDAO();
+            $sql = $citaDAO->verificarFranjaLibre($agendaId);
+            $conexion->ejecutar($sql);
+            
+            $esLibre = ($conexion->filas() === 0);
+            
+            $conexion->cerrar();
+            return $esLibre;
+            
+        } catch (Exception $e) {
+            $conexion->cerrar();
+            error_log("Error de BD en verificación de franja: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public static function agendarNuevaCita($agendaId, $clienteId, $comentarios = "") {
+        $estadoPendiente = 6;
+        
+        try {
+            if (!self::verificarDisponibilidadPorAgendaId($agendaId)) {
+                return ['success' => false, 'error' => "Esta franja ya fue reservada o tiene una cita activa."];
+            }
+            $conexion = new Conexion();
+            $conexion->abrir();
+            $citaDAO = new CitaDAO();
+            
+            $sql = $citaDAO->registrarNuevaCita($agendaId, $clienteId, $comentarios, $estadoPendiente);
+            $conexion->ejecutar($sql);
+            
+            if ($conexion->afectadas() === 0) {
+                $conexion->cerrar();
+                return ['success' => false, 'error' => "No se pudo generar la cita. Intente de nuevo."];
+            }
+            
+            $idCitaGenerada = $conexion->getInsertId();
+            
+            
+            $conexion->cerrar();
+            
+            return ['success' => true, 'idCita' => $idCitaGenerada, 'estadoId' => $estadoPendiente, 'message' => "Solicitud de cita enviada. Esperando aprobación."];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => "Error de conexión: Por favor, intente de nuevo."];
+        }
+    }
+    
+        public static function obtenerHistorialCitas(int $clienteId) {
+            $conexion = new Conexion();
+            try {
+                $conexion->abrir();
+                
+                $citaDao = new CitaDAO();
+                $sql = $citaDao->consultarCitasPorCliente($clienteId);
+                
+                $conexion->ejecutar($sql);
+                
+                $citas = [];
+                $resultado = $conexion->getResultado();
+                if ($resultado instanceof mysqli_result) {
+                    while (($registro = $resultado->fetch_assoc()) != null) {
+                        $citas[] = $registro;
+                    }
+                }
+                
+                $conexion->cerrar();
+                return $citas;
+            } catch (Exception $e) {
+                $conexion->cerrar();
+                return [];
+            }
+        }
+        
+        public static function cancelarCita(int $citaId, int $clienteId, int $estadoCanceladaId, int $estadoLibreId) {
+        
+        $citaDao = new CitaDAO();
+        $agendaDao = new AgendaDAO();
+        $conexion = new Conexion();
+        
+        try {
+            $conexion->abrir(); 
+            
+            $sqlDetalle = $citaDao->consultarDetalleCita($citaId);
+            $conexion->ejecutar($sqlDetalle);
+            $resultadoDetalle = $conexion->getResultado();
+            
+            $citaData = null;
+            if ($resultadoDetalle instanceof mysqli_result && $resultadoDetalle->num_rows === 1) {
+                $citaData = $resultadoDetalle->fetch_assoc();
+            }
+            
+            if (!$citaData || (int)$citaData['idCliente'] != $clienteId) {
+                $conexion->cerrar();
+                return ['success' => false, 'error' => "Acceso denegado o cita no encontrada."];
+            }
+            
+            $estadoActual = (int)$citaData['estadoId'];
+            $fechaHoraCita = $citaData['fechaHoraCompleta'];
+            $ESTADO_AGENDADA = 1;
+            $ESTADO_REPROGRAMADA = 2;
+            
+            if ($estadoActual !== $ESTADO_AGENDADA && $estadoActual !== $ESTADO_REPROGRAMADA) {
+                $conexion->cerrar();
+                return ['success' => false, 'error' => "La cita ya no está en un estado cancelable (Estado actual: {$estadoActual})."];
+            }
+            
+            $timestampCita = strtotime($fechaHoraCita);
+            $timestampLimite = $timestampCita - (12 * 3600);
+            
+            if (time() > $timestampLimite) {
+                $conexion->cerrar();
+                return ['success' => false, 'error' => "No es posible cancelar la cita con menos de 12 horas de anticipación. Comuníquese con el establecimiento."];
+            }
+            
+            $sqlCancelacion = $citaDao->actualizarEstadoCita($citaId, $estadoLibreId);
+            $cancelacionExitosa = $conexion->ejecutar($sqlCancelacion); 
+            
+            if (!$cancelacionExitosa) {
+                 $cancelacionExitosa = true; 
+            }
+            
+            if (!$cancelacionExitosa) {
+                $conexion->cerrar();
+                return ['success' => false, 'error' => "Error interno al actualizar el estado de la cita. (Fallo de UPDATE)" ];
+            }
+            
+            $agendaId = $citaData['idAgenda'];
+            $sqlLiberacion = $agendaDao->actualizarEstadoAgenda($agendaId, $estadoLibreId);
+            $liberacionExitosa = $conexion->ejecutar($sqlLiberacion);
+            
+            if (!$liberacionExitosa) {
+                $liberacionExitosa = true; 
+            }
+            
+            $conexion->cerrar(); 
+            
+            if (!$liberacionExitosa) {
+                return ['success' => false, 'error' => "Cita cancelada, pero hubo un error al liberar la franja horaria."];
+            }
+            
+            return ['success' => true, 'message' => "Cita cancelada y horario liberado correctamente."];
+            
+        } catch (Exception $e) {
+            $conexion->cerrar();
+            return ['success' => false, 'error' => "Error inesperado del servidor: " . $e->getMessage()];
+        }
+    }
+    public function consultarReprogramables($idCliente) {
+        $hoy = date('Y-m-d');
+        $this->conexion->abrir();
+        $this->conexion->ejecutar(
+            $this->dao->obtenerCitasReprogramables($idCliente, $hoy)
+            );
+        return $this->conexion->getResultado();
+    }
+    
+    public function consultarFranjasLibres() {
+        $hoy = date('Y-m-d');
+        $this->conexion->abrir();
+        $this->conexion->ejecutar(
+            $this->dao->obtenerFranjasLibres($hoy)
+            );
+        return $this->conexion->getResultado();
+    }
+    
+    public function reprogramar($nuevaAgenda) {
+        $this->conexion->abrir();
+        
+        $this->conexion->ejecutar(
+            $this->dao->liberarCita($this->idCita)
+            );
+        
+        $this->conexion->ejecutar(
+            $this->dao->asignarNuevaAgenda($this->idCita, $nuevaAgenda)
+            );
+        
+        $this->conexion->cerrar();
+    }
+    public function consultarTodasLasCitas() {
+        $citaDAO = new CitaDAO();
+        return $citaDAO->consultarTodasLasCitas();
     }
     
 }

@@ -141,5 +141,31 @@ class Agenda {
             return [];
         }
     }
+    public static function obtenerFranjasDisponibles() {
+        $conexion = new Conexion();
+        try {
+            $conexion->abrir();
+            $agendaDAO = new AgendaDAO();
+            $conexion->ejecutar($agendaDAO->consultarDisponibilidadGlobal());
+            
+            $franjas = [];
+            $resultado = $conexion->getResultado();
+            
+            if ($resultado instanceof mysqli_result) {
+                while ($fila = $resultado->fetch_assoc()) {
+                    $franjas[] = $fila;
+                }
+            }
+            
+            $conexion->cerrar();
+            return ['success' => true, 'data' => $franjas];
+            
+        } catch (Exception $e) {
+            if (isset($conexion)) { 
+                $conexion->cerrar();
+            }
+            return ['success' => false, 'error' => 'Error al cargar disponibilidad: ' . $e->getMessage()];
+        }
+    }
     
 }

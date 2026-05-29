@@ -162,5 +162,144 @@ class CitaDAO {
         ORDER BY ct.idCita ASC
     ";
     }
+    public function registrarNuevaCita($agendaId, $clienteId, $comentarios, $estadoPendiente) {
+        $comentariosEscapados = addslashes($comentarios);
+        return "
+            INSERT INTO cita (EstadoCita_idEstadoCita, Agenda_idAgenda, Cliente_idCliente, comentarios)
+            VALUES (
+                " . intval($estadoPendiente) . ",
+                " . intval($agendaId) . ",
+                " . intval($clienteId) . ",
+                '" . $comentariosEscapados . "'
+            )
+        ";
+    }
+    
+    public function verificarFranjaLibre($agendaId) {
+        return "
+            SELECT
+                ct.idCita
+            FROM cita ct
+            WHERE
+                ct.Agenda_idAgenda = " . intval($agendaId) . "
+                AND ct.EstadoCita_idEstadoCita IN (1, 2, 6)
+        ";
+    }
+    public function consultarCitasPorCliente(int $clienteId) {
+        return "
+        SELECT
+            ct.idCita AS id,
+            ct.comentarios,
+            ct.EstadoCita_idEstadoCita AS estadoId,
+            CONCAT(emp.Nombre, ' ', emp.Apellido) AS NombreEmpleado,
+            s.Nombre AS NombreServicio,
+            a.Fecha AS fecha,
+            a.HoraInicio AS hora_inicio,
+            ec.Tipo AS EstadoNombre,
+            a.idAgenda AS idAgenda
+        FROM cita ct
+        JOIN agenda a ON ct.Agenda_idAgenda = a.idAgenda
+        JOIN empleado emp ON a.Empleado_idEmpleado = emp.idEmpleado
+        JOIN servicio s ON a.Servicio_idServicio = s.idServicio
+        JOIN estadocita ec ON ct.EstadoCita_idEstadoCita = ec.idEstadoCita
+        WHERE ct.Cliente_idCliente = " . $clienteId . "
+        ORDER BY a.Fecha DESC, a.HoraInicio DESC
+    ";
+    }
+    
+    public function consultarDetalleCita(int $citaId) {
+        return "
+        SELECT
+            ct.Agenda_idAgenda AS idAgenda,
+            ct.EstadoCita_idEstadoCita AS estadoId,
+            ct.Cliente_idCliente AS idCliente,
+            a.Fecha AS fecha,
+            a.HoraInicio AS hora_inicio,
+            CONCAT(a.Fecha, ' ', a.HoraInicio) AS fechaHoraCompleta
+        FROM cita ct
+        JOIN agenda a ON ct.Agenda_idAgenda = a.idAgenda
+        WHERE ct.idCita = " . $citaId;
+    }
+    
+    public function actualizarEstadoCita(int $citaId, int $nuevoEstadoId) {
+        return "
+        UPDATE cita
+        SET EstadoCita_idEstadoCita = " . $nuevoEstadoId . "
+        WHERE idCita = " . $citaId;
+    }
+    public function obtenerCitasReprogramables($idCliente, $hoy) {
+        return "
+            SELECT
+                ct.idCita,
+                s.Nombre AS servicio,
+                CONCAT(emp.Nombre,' ',emp.Apellido) AS empleado,
+                a.Fecha,
+                a.HoraInicio
+            FROM cita ct
+            INNER JOIN agenda a ON ct.Agenda_idAgenda = a.idAgenda
+            INNER JOIN empleado emp ON a.Empleado_idEmpleado = emp.idEmpleado
+            INNER JOIN servicio s ON a.Servicio_idServicio = s.idServicio
+            WHERE ct.Cliente_idCliente = $idCliente
+            AND ct.EstadoCita_idEstadoCita IN (1,6)
+            AND a.Fecha >= '$hoy'
+            ORDER BY a.Fecha ASC
+        ";
+    }
+    
+    public function obtenerFranjasLibres($hoy) {
+        return "
+        SELECT
+            a.idAgenda,
+            s.Nombre AS servicio,
+            CONCAT(emp.Nombre,' ',emp.Apellido) AS empleado,
+            a.Fecha,
+            a.HoraInicio
+        FROM agenda a
+        INNER JOIN servicio s ON a.Servicio_idServicio = s.idServicio
+        INNER JOIN empleado emp ON a.Empleado_idEmpleado = emp.idEmpleado
+        WHERE a.Fecha >= '$hoy'
+        AND a.idAgenda NOT IN (
+            SELECT ct.Agenda_idAgenda
+            FROM cita ct
+            WHERE ct.EstadoCita_idEstadoCita IN (1, 2, 6)
+        )
+        ORDER BY a.Fecha ASC
+    ";
+    }
+    
+    public function liberarCita($idCita) {
+        return "UPDATE cita SET EstadoCita_idEstadoCita = 7 WHERE idCita = $idCita";
+    }
+    
+    public function asignarNuevaAgenda($idCita, $nuevaAgenda) {
+        return "
+            UPDATE cita
+            SET Agenda_idAgenda = $nuevaAgenda,
+                EstadoCita_idEstadoCita = 6
+            WHERE idCita = $idCita
+        ";
+    }
+    public function consultarTodasLasCitas() {
+       return "
+    SELECT
+        c.idCita,
+        s.nombreServicio AS servicio,
+        u.nombre AS empleado,
+        cl.nombre AS cliente,
+        a.Fecha,
+        a.HoraInicio,
+        ec.nombreEstado AS estado,
+        c.comentarios
+    FROM cita c
+    INNER JOIN agenda a ON c.Agenda_idAgenda = a.idAgenda
+    INNER JOIN servicio s ON a.Servicio_idServicio = s.idServicio
+    INNER JOIN usuario u ON a.Empleado_idEmpleado = u.idUsuario
+    INNER JOIN cliente cl ON c.Cliente_idCliente = cl.idCliente
+    INNER JOIN estadocita ec ON c.EstadoCita_idEstadoCita = ec.idEstadoCita
+    ORDER BY a.Fecha DESC, a.HoraInicio DESC
+    ";
+    }
+    
+
 }
 ?>

@@ -23,6 +23,43 @@ $empleado->consultar();
         </a>
       </li>
       
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="serviciosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fa-solid fa-calendar-days"></i> Citas
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="serviciosDropdown">
+          
+          <li><h6 class="dropdown-header">Administración de Citas</h6></li>
+          
+          <li>
+            <a class="dropdown-item" href="?pid=<?php echo base64_encode("presentacion/cita/agendarCita.php"); ?>">
+              <i class="fa-solid fa-calendar-plus"></i> Agendar Cita
+            </a>
+          </li>
+          
+          <li>
+            <a class="dropdown-item" href="?pid=<?php echo base64_encode("presentacion/cita/reprogramarCita.php"); ?>">
+              <i class="fa-solid fa-arrows-rotate"></i> Reprogramar Cita
+            </a>
+          </li>
+          
+          <li>
+            <a class="dropdown-item" href="?pid=<?php echo base64_encode("presentacion/cita/cancelarCita.php"); ?>">
+              <i class="fa-solid fa-xmark"></i> Cancelar Cita
+            </a>
+          </li>
+          
+          <li><hr class="dropdown-divider"></li>
+                        
+          <li>
+            <a class="dropdown-item" href="?pid=<?php echo base64_encode("presentacion/cita/consultarCita.php"); ?>">
+              <i class="fa-solid fa-magnifying-glass"></i> Consultar Citas
+            </a>
+          </li>
+          
+        </ul>
+      </li>
+      
        <li class="nav-item">
         <a class="nav-link" href="?pid=<?php echo base64_encode("presentacion/empleado/editarPerfil.php"); ?>">
           <i class="fa-solid fa-pen-to-square"></i> Editar Información
@@ -48,6 +85,11 @@ $empleado->consultar();
         </a>
       </li>
       
+       <li class="nav-item">
+        <a class="nav-link" href="?pid=<?php echo base64_encode("presentacion/cita/envioRecordatorios.php"); ?>">
+          <i class="fa-solid fa-bell"></i> Recordatorios
+        </a>
+      </li>
 
     </ul>
 

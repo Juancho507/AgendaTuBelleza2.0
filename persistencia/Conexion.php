@@ -43,6 +43,9 @@ class Conexion{
     public function getResultado(){
         return $this -> resultado;
     }
+    public function getInsertId() {
+        return $this->mysqli->insert_id;
+    }
     
     public function obtenerId() {
         return $this->conexion->insert_id;

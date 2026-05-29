@@ -5,17 +5,33 @@ if (!isset($_SESSION) || $_SESSION["rol"] != "gerente") {
     exit();
 }
 
-require_once(__DIR__ . "/../../logica/Estadistica.php"); 
+require_once(__DIR__ . "/../../logica/Estadistica.php");
 
-$estadistica = new Estadistica();
-
-$totalCitas = $estadistica->totalCitasAtendidas();
-
-$totalServiciosRegistrados = $estadistica->totalServiciosRegistrados();
-
-$serviciosTop = $estadistica->serviciosMasSolicitados();
-
-$ingresosServicios = $estadistica->ingresosEstimadosPorServicio(); 
+try {
+    $estadistica = new Estadistica();
+    
+    $totalCitas = $estadistica->totalCitasAtendidas();
+    $totalServiciosRegistrados = $estadistica->totalServiciosRegistrados();
+    $serviciosTop = $estadistica->serviciosMasSolicitados();
+    $ingresosServicios = $estadistica->ingresosEstimadosPorServicio();
+    
+} catch (Exception $e) {
+    include("presentacion/encabezadoG.php");
+    include("presentacion/menuGerente.php");
+    echo '
+    <div class="container mt-5">
+        <div class="alert alert-danger shadow">
+            <h4><i class="fa-solid fa-chart-line"></i> Error al cargar estadísticas</h4>
+            <p>No se pudo establecer conexión con el servidor de datos para generar el dashboard. Por favor, inténtalo de nuevo.</p>
+            <hr>
+            <div class="d-flex gap-2">
+                <button onclick="location.reload();" class="btn btn-danger">Reintentar</button>
+                <a href="index.php" class="btn btn-outline-secondary">Volver al Panel</a>
+            </div>
+        </div>
+    </div>';
+    exit();
+}
 
 ?>
 

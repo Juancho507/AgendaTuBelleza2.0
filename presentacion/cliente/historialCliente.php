@@ -8,15 +8,30 @@ if ($_SESSION["rol"] != "cliente") {
     exit();
 }
 
-require_once("logica/Cliente.php");
-require_once("logica/PQRS.php");
-
 $idCliente = $_SESSION["id"];
 
-$cliente = new Cliente($idCliente);
-$historialCitas = $cliente->consultarHistorialCitas();
-
-$historialPQRS = PQRS::consultarHistorialPorCliente($idCliente);
+try {
+    $cliente = new Cliente($idCliente);
+    $historialCitas = $cliente->consultarHistorialCitas();
+    $historialPQRS = PQRS::consultarHistorialPorCliente($idCliente);
+    
+} catch (Exception $e) {
+    include("presentacion/encabezadoC.php");
+    include("presentacion/menuCliente.php");
+    echo '
+    <div class="container mt-5">
+        <div class="alert alert-danger shadow">
+            <h4><i class="fas fa-exclamation-triangle"></i> Error de Conexión</h4>
+            <p>Lo sentimos, no pudimos obtener tu información en este momento debido a un problema con el servidor.</p>
+            <hr>
+            <div class="d-flex gap-2">
+                <button onclick="location.reload();" class="btn btn-danger">Reintentar</button>
+                <a href="index.php" class="btn btn-outline-secondary">Volver al Inicio</a>
+            </div>
+        </div>
+    </div>';
+    exit(); 
+}
 ?>
 
 <?php include("presentacion/encabezadoC.php");  ?>
@@ -146,6 +161,6 @@ $historialPQRS = PQRS::consultarHistorialPorCliente($idCliente);
         
     </div>
     <a href="?pid=<?php echo base64_encode("presentacion/cliente/historialpdf.php"); ?>" class="btn btn-secondary mt-3">
-    Generar PDF del Historial
-</a>
+        Generar PDF del Historial
+    </a>
 </div>

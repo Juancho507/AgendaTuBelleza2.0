@@ -4,14 +4,33 @@ if (!isset($_SESSION) || $_SESSION["rol"] != "gerente") {
     header("Location: ?pid=" . base64_encode("presentacion/noAutorizado.php"));
     exit();
 }
-$servicios = Servicio::consultarServiciosCompletos();
 
-$servicioDetalle = null;
-$idServicioDetalle = isset($_GET['id']) && is_numeric($_GET['id']) ? (int)$_GET['id'] : 0;
-
-if ($idServicioDetalle > 0) {
-    $servicio = new Servicio($idServicioDetalle);
-    $servicioDetalle = $servicio->consultarDetalle();
+try {
+    $servicios = Servicio::consultarServiciosCompletos();
+    
+    $servicioDetalle = null;
+    $idServicioDetalle = isset($_GET['id']) && is_numeric($_GET['id']) ? (int)$_GET['id'] : 0;
+    
+    if ($idServicioDetalle > 0) {
+        $servicio = new Servicio($idServicioDetalle);
+        $servicioDetalle = $servicio->consultarDetalle();
+    }
+} catch (Exception $e) {
+    include("presentacion/encabezadoG.php");
+    include("presentacion/menuGerente.php");
+    echo '
+    <div class="container mt-5">
+        <div class="alert alert-danger shadow">
+            <h4><i class="fa-solid fa-circle-exclamation"></i> Error de Conexión</h4>
+            <p>Hubo un problema al conectar con la base de datos. Por favor, verifica tu conexión e inténtalo de nuevo.</p>
+            <hr>
+            <div class="d-flex gap-2">
+                <button onclick="location.reload();" class="btn btn-danger">Reintentar</button>
+                <a href="index.php" class="btn btn-outline-secondary">Volver</a>
+            </div>
+        </div>
+    </div>';
+    exit();
 }
 
 ?>

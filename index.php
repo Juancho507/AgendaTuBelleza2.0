@@ -10,6 +10,7 @@ require("logica/Cita.php");
 require("logica/Estadistica.php");
 require("logica/Agenda.php");
 require("logica/EstadoCita.php");
+
 ?>
 
 <!DOCTYPE html>
@@ -62,8 +63,12 @@ $paginas_con_autenticacion = array(
     "presentacion/gerente/editarGerente.php",
     "presentacion/gerente/historialGerente.php",
     "presentacion/gerente/BuscarGerente.php",
-    "presentacion/gerente/reportepdf.php"
-    
+    "presentacion/gerente/reportepdf.php",
+    "presentacion/cita/agendarCita.php",
+    "presentacion/cita/reprogramarCita.php",
+    "presentacion/cita/cancelarCita.php",
+    "presentacion/cita/consultarCita.php",
+    "presentacion/cita/envioRecordatorios.php"
     
 );
 

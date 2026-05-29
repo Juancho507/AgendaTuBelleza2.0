@@ -95,5 +95,35 @@ class AgendaDAO {
         ORDER BY a.idAgenda ASC
     ";
     }
+    public function consultarDisponibilidadGlobal() {
+        return "
+            SELECT
+                a.idAgenda,
+                a.Fecha,
+                a.HoraInicio,
+                a.HoraFin,
+                CONCAT(e.Nombre, ' ', e.Apellido) AS NombreEmpleado,
+                e.idEmpleado,
+                s.Nombre AS NombreServicio,
+                TIMESTAMPDIFF(MINUTE, a.HoraInicio, a.HoraFin) AS DuracionMinutos,
+               
+                COALESCE(ct.EstadoCita_idEstadoCita, 7) AS EstadoId
+            FROM agenda a
+            JOIN empleado e ON a.Empleado_idEmpleado = e.idEmpleado
+            JOIN servicio s ON a.Servicio_idServicio = s.idServicio
+            LEFT JOIN cita ct ON a.idAgenda = ct.Agenda_idAgenda
+            WHERE
+                a.Fecha >= CURDATE()
+                AND e.Estado = 1 
+                
+                AND (ct.idCita IS NULL OR ct.EstadoCita_idEstadoCita IN (7, 6))
+            ORDER BY a.Fecha ASC, a.HoraInicio ASC;
+        ";
+    }
+    public function actualizarEstadoAgenda(int $agendaId, int $nuevoEstadoId) {
+        
+        return "SELECT 1";
+    }
+
 }
 ?>
